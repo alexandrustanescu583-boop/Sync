@@ -1,0 +1,8 @@
+{
+  "name": "Sync",
+  "description": "syncAi: Asistent AI inteligent, rapid și sigur cu moduri specializate și suport vocal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -315,7 +315,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             e.stopPropagation();
                             onDeleteSession(session.id);
                           }}
-                          className={`p-1 transition-colors ${isLight ? 'text-zinc-500 hover:text-red-500' : 'text-zinc-400 hover:text-red-400'}`}
+                          className={`p-1 transition-colors ${isLight ? 'text-zinc-500 hover:text-zinc-800' : 'text-zinc-400 hover:text-zinc-200'}`}
                           title="Șterge conversația"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -421,7 +421,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={onLogout}
               className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                isLight ? 'text-zinc-400 hover:text-red-500 hover:bg-black/5' : 'text-zinc-400 hover:text-red-400 hover:bg-white/5'
+                isLight ? 'text-zinc-400 hover:text-[#4285F4] hover:bg-black/5' : 'text-zinc-400 hover:text-[#4285F4] hover:bg-white/5'
               }`}
               title="Deconectare"
             >

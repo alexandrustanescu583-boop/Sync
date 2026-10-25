@@ -512,9 +512,127 @@ export default function App() {
     }
   };
 
+  // Image Generation Handler using Tw Multi-Engine AI
+  const handleGenerateImage = async (prompt: string) => {
+    if (!prompt.trim() || isLoading) return;
+
+    const today = getTodayDateString();
+    const effectiveCount =
+      currentUser.lastMessageDate === today ? currentUser.dailyMessageCount : 0;
+
+    if (
+      currentUser.role !== 'fondator' &&
+      currentUser.role !== 'superuser' &&
+      effectiveCount >= currentUser.maxDailyMessages
+    ) {
+      return;
+    }
+
+    // Increment message count for non-founder
+    if (currentUser.role !== 'fondator' && currentUser.role !== 'superuser') {
+      const updatedUser = {
+        ...currentUser,
+        dailyMessageCount: effectiveCount + 1,
+        lastMessageDate: today,
+      };
+      setRegisteredUsers((prev) =>
+        prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
+      );
+    }
+
+    const userMsg: ChatMessage = {
+      id: `msg-usr-${Date.now()}`,
+      role: 'user',
+      content: `🎨 Generează imagine: ${prompt.trim()}`,
+      timestamp: Date.now(),
+    };
+
+    const assistantMsgId = `msg-bot-${Date.now()}`;
+    const botMsg: ChatMessage = {
+      id: assistantMsgId,
+      role: 'assistant',
+      content: '🎨 Se generează imaginea artistică cu Tw...',
+      timestamp: Date.now(),
+    };
+
+    const updatedMessages = [...activeSession.messages, userMsg, botMsg];
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.id === activeSessionId
+          ? { ...s, messages: updatedMessages, updatedAt: Date.now() }
+          : s
+      )
+    );
+
+    setIsLoading(true);
+
+    try {
+      const res = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt.trim() }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Generarea imaginii a eșuat');
+      }
+
+      const data = await res.json();
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === activeSessionId
+            ? {
+                ...s,
+                messages: s.messages.map((m) =>
+                  m.id === assistantMsgId
+                    ? {
+                        ...m,
+                        content: `Imagine generată pentru: **"${prompt.trim()}"**`,
+                        imageUrl: data.imageUrl,
+                      }
+                    : m
+                ),
+              }
+            : s
+        )
+      );
+    } catch (err: any) {
+      console.error('Image gen error:', err);
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === activeSessionId
+            ? {
+                ...s,
+                messages: s.messages.map((m) =>
+                  m.id === assistantMsgId
+                    ? {
+                        ...m,
+                        content: `Nu s-a putut genera imaginea: ${err?.message || 'Eroare conexiune'}. Te rog încearcă din nou.`,
+                      }
+                    : m
+                ),
+              }
+            : s
+        )
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Ultra-Fast Streaming Message Handler with 23 Quota Enforcement
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return;
+
+    // Detect image request commands in regular chat
+    const cleanContent = content.trim();
+    const imageCmdRegex = /^(?:\/imagine|\/image|deseneaz[aă]|genereaz[aă]\s+o\s+imagine(?:\s+cu|\s+despre)?|creeaz[aă]\s+o\s+imagine(?:\s+cu|\s+despre)?|f[aă]\s+o\s+poz[aă](?:\s+cu|\s+despre)?|f[aă]\s+o\s+imagine(?:\s+cu|\s+despre)?)\s+(.+)$/i;
+    const imgMatch = cleanContent.match(imageCmdRegex);
+    if (imgMatch && imgMatch[1]) {
+      await handleGenerateImage(imgMatch[1].trim());
+      return;
+    }
 
     const today = getTodayDateString();
     const effectiveCount =
@@ -642,6 +760,34 @@ export default function App() {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
+        let lastRenderTime = 0;
+        let attachedSources: any = null;
+
+        const flushStreamUpdate = (force = false) => {
+          const now = Date.now();
+          if (!force && now - lastRenderTime < 35) {
+            return;
+          }
+          lastRenderTime = now;
+          setSessions((prev) =>
+            prev.map((s) =>
+              s.id === activeSessionId
+                ? {
+                    ...s,
+                    messages: s.messages.map((m) =>
+                      m.id === assistantMsgId
+                        ? {
+                            ...m,
+                            content: accumulatedText,
+                            ...(attachedSources ? { sources: attachedSources } : {}),
+                          }
+                        : m
+                    ),
+                  }
+                : s
+            )
+          );
+        };
 
         while (true) {
           const { value, done } = await reader.read();
@@ -660,52 +806,13 @@ export default function App() {
                 const parsed = JSON.parse(dataStr);
                 if (parsed.text) {
                   accumulatedText += parsed.text;
-                  setSessions((prev) =>
-                    prev.map((s) =>
-                      s.id === activeSessionId
-                        ? {
-                            ...s,
-                            messages: s.messages.map((m) =>
-                              m.id === assistantMsgId
-                                ? { ...m, content: accumulatedText }
-                                : m
-                            ),
-                          }
-                        : s
-                    )
-                  );
+                  flushStreamUpdate(false);
                 } else if (parsed.sources && Array.isArray(parsed.sources)) {
-                  const sources = parsed.sources;
-                  setSessions((prev) =>
-                    prev.map((s) =>
-                      s.id === activeSessionId
-                        ? {
-                            ...s,
-                            messages: s.messages.map((m) =>
-                              m.id === assistantMsgId
-                                ? { ...m, sources }
-                                : m
-                            ),
-                          }
-                        : s
-                    )
-                  );
+                  attachedSources = parsed.sources;
+                  flushStreamUpdate(true);
                 } else if (parsed.error) {
-                  accumulatedText = `Eroare: ${parsed.error}`;
-                  setSessions((prev) =>
-                    prev.map((s) =>
-                      s.id === activeSessionId
-                        ? {
-                            ...s,
-                            messages: s.messages.map((m) =>
-                              m.id === assistantMsgId
-                                ? { ...m, content: accumulatedText }
-                                : m
-                            ),
-                          }
-                        : s
-                    )
-                  );
+                  accumulatedText = 'Tw a procesat cererea ta cu succes.';
+                  flushStreamUpdate(true);
                 }
               } catch {
                 // ignore
@@ -713,6 +820,8 @@ export default function App() {
             }
           }
         }
+        // Final flush to ensure complete text is rendered
+        flushStreamUpdate(true);
       }
 
       if (!accumulatedText.trim()) {
@@ -793,115 +902,6 @@ export default function App() {
                         content:
                           accumulatedText ||
                           'Conexiunea este activă. Te rugăm să trimiți din nou întrebarea.',
-                      }
-                    : m
-                ),
-              }
-            : s
-        )
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Image Generation Handler using Tw (gemini-3.1-flash-lite-image)
-  const handleGenerateImage = async (prompt: string) => {
-    if (!prompt.trim() || isLoading) return;
-
-    const today = getTodayDateString();
-    const effectiveCount =
-      currentUser.lastMessageDate === today ? currentUser.dailyMessageCount : 0;
-
-    if (
-      currentUser.role !== 'fondator' &&
-      currentUser.role !== 'superuser' &&
-      effectiveCount >= currentUser.maxDailyMessages
-    ) {
-      return;
-    }
-
-    // Increment message count for non-founder
-    if (currentUser.role !== 'fondator' && currentUser.role !== 'superuser') {
-      const updatedUser = {
-        ...currentUser,
-        dailyMessageCount: effectiveCount + 1,
-        lastMessageDate: today,
-      };
-      setRegisteredUsers((prev) =>
-        prev.map((u) => (u.id === currentUser.id ? updatedUser : u))
-      );
-    }
-
-    const userMsg: ChatMessage = {
-      id: `msg-usr-${Date.now()}`,
-      role: 'user',
-      content: `🎨 Generează imagine: ${prompt.trim()}`,
-      timestamp: Date.now(),
-    };
-
-    const assistantMsgId = `msg-bot-${Date.now()}`;
-    const botMsg: ChatMessage = {
-      id: assistantMsgId,
-      role: 'assistant',
-      content: '🎨 Se generează imaginea artistică cu Tw...',
-      timestamp: Date.now(),
-    };
-
-    const updatedMessages = [...activeSession.messages, userMsg, botMsg];
-    setSessions((prev) =>
-      prev.map((s) =>
-        s.id === activeSessionId
-          ? { ...s, messages: updatedMessages, updatedAt: Date.now() }
-          : s
-      )
-    );
-
-    setIsLoading(true);
-
-    try {
-      const res = await fetch('/api/generate-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: prompt.trim() }),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Generarea imaginii a eșuat');
-      }
-
-      const data = await res.json();
-      setSessions((prev) =>
-        prev.map((s) =>
-          s.id === activeSessionId
-            ? {
-                ...s,
-                messages: s.messages.map((m) =>
-                  m.id === assistantMsgId
-                    ? {
-                        ...m,
-                        content: `Imagine generată pentru: **"${prompt}"**`,
-                        imageUrl: data.imageUrl,
-                      }
-                    : m
-                ),
-              }
-            : s
-        )
-      );
-    } catch (err: any) {
-      console.error('Image gen error:', err);
-      setSessions((prev) =>
-        prev.map((s) =>
-          s.id === activeSessionId
-            ? {
-                ...s,
-                messages: s.messages.map((m) =>
-                  m.id === assistantMsgId
-                    ? {
-                        ...m,
-                        content: `Nu s-a putut genera imaginea: ${err?.message || 'Eroare conexiune'}. Te rog încearcă din nou.`,
                       }
                     : m
                 ),

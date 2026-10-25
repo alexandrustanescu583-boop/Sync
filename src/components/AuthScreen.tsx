@@ -4,7 +4,7 @@ import {
   Mail,
   User,
   ArrowRight,
-  AlertCircle,
+  Info,
   Clock,
   Sparkles,
   Sun,
@@ -308,10 +308,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           {errorMessage && (
             <div className={`flex items-center gap-2 p-3 rounded-2xl border text-xs animate-fadeIn ${
               isLight
-                ? 'bg-red-50 border-red-200 text-red-700'
-                : 'bg-red-950/40 border-red-500/40 text-red-300'
+                ? 'bg-amber-50 border-amber-200 text-amber-900'
+                : 'bg-zinc-800/90 border-zinc-700 text-zinc-200'
             }`}>
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+              <Info className="w-4 h-4 shrink-0 text-cyan-500" />
               <span>{errorMessage}</span>
             </div>
           )}

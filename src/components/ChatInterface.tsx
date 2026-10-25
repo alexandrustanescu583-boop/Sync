@@ -4,9 +4,10 @@ import {
   Mic,
   MicOff,
   Volume2,
-  VolumeX,
+  Volume,
   Copy,
   Check,
+  CheckCircle,
   RotateCcw,
   Menu,
   ThumbsUp,
@@ -81,6 +82,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onChangeMode,
   onOpenAdmin,
   userRole,
+  onVerifyMessage,
+  verifyingMessageId,
   currentUser,
   onLogout,
   onResetQuota,
@@ -98,6 +101,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showImagePromptModal, setShowImagePromptModal] = useState(false);
   const [imagePromptInput, setImagePromptInput] = useState('');
+
+  const handleOpenImageModal = () => {
+    if (inputText.trim()) {
+      setImagePromptInput(inputText.trim());
+    }
+    setShowImagePromptModal(true);
+  };
 
   const safeSession = session || {
     id: 'default-session',
@@ -295,12 +305,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           >
             {autoSpeak ? (
               <>
-                <Volume2 className="w-3.5 h-3.5" />
-                <span className="hidden md:inline text-[11px]">Voce activată</span>
+                <Volume2 className="w-3.5 h-3.5 text-[#9B72CF]" />
+                <span className="hidden md:inline text-[11px] font-medium">Voce activată</span>
               </>
             ) : (
               <>
-                <VolumeX className="w-3.5 h-3.5" />
+                <Volume className="w-3.5 h-3.5" />
                 <span className="hidden md:inline text-[11px]">Voce</span>
               </>
             )}
@@ -317,8 +327,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono tabular-nums border ${
                 isQuotaExhausted
                   ? isLight
-                    ? 'bg-red-50 border-red-300 text-red-600'
-                    : 'bg-red-950/60 border-red-500/50 text-red-400'
+                    ? 'bg-zinc-100 border-zinc-300 text-zinc-700'
+                    : 'bg-zinc-800 border-zinc-700 text-zinc-300'
                   : isLastTwoWarning
                   ? isLight
                     ? 'bg-amber-50 border-amber-300 text-amber-700 animate-pulse'
@@ -355,7 +365,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <button
               onClick={onLogout}
               className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
-                isLight ? 'text-zinc-500 hover:text-red-500 hover:bg-black/5' : 'text-zinc-400 hover:text-red-400 hover:bg-white/5'
+                isLight ? 'text-zinc-500 hover:text-[#4285F4] hover:bg-black/5' : 'text-zinc-400 hover:text-[#4285F4] hover:bg-white/5'
               }`}
               title="Deconectare"
             >
@@ -371,21 +381,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           isLight ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-amber-950/80 border-amber-500/30 text-amber-200'
         }`}>
           <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-          <span>Atenție: Mai ai doar {remainingMessages} mesaje disponibile astăzi (se resetează la miezul nopții).</span>
+          <span>Atenție: Mai ai {remainingMessages} mesaje disponibile astăzi (se resetează la miezul nopții).</span>
         </div>
       )}
 
       {isQuotaExhausted && (
         <div className={`border-b px-4 py-2.5 text-xs flex items-center justify-between shrink-0 ${
-          isLight ? 'bg-red-50 border-red-200 text-red-800' : 'bg-red-950/80 border-red-500/30 text-red-200'
+          isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-800' : 'bg-zinc-900 border-zinc-800 text-zinc-300'
         }`}>
           <div className="flex items-center gap-2 max-w-2xl mx-auto w-full">
-            <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
-            <span>Ai atins limita de 23 de mesaje pe astăzi. Mesajele se resetează automat la miezul nopții.</span>
+            <Clock className="w-4 h-4 text-cyan-500 shrink-0" />
+            <span>Ai utilizat cele 23 de mesaje de elev pentru astăzi. Se resetează automat la miezul nopții.</span>
             {isPrivileged && (
               <button
                 onClick={onResetQuota}
-                className="ml-auto px-2 py-0.5 rounded bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] cursor-pointer"
+                className="ml-auto px-2.5 py-1 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-[11px] cursor-pointer shadow-sm"
               >
                 Reset Admin
               </button>
@@ -482,6 +492,22 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                             Tw gândește rapid...
                           </span>
                         </div>
+                      ) : msg.content === '🎨 Se generează imaginea artistică cu Tw...' ? (
+                        <div className={`my-2 p-3.5 rounded-2xl border flex items-center gap-3 animate-pulse max-w-sm ${
+                          isLight
+                            ? 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200/70 text-zinc-800'
+                            : 'bg-gradient-to-r from-blue-950/40 to-purple-950/40 border-purple-500/30 text-zinc-200'
+                        }`}>
+                          <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-[#4285F4] to-[#9B72CF] flex items-center justify-center text-white shrink-0 animate-spin">
+                            <TwSparkleIcon size={14} />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold">Se desenează imaginea...</div>
+                            <div className={`text-[11px] ${isLight ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                              Tw AI aplică stilul artistic de înaltă rezoluție.
+                            </div>
+                          </div>
+                        </div>
                       ) : (
                         <MarkdownRenderer content={msg.content} theme={theme} />
                       )}
@@ -494,6 +520,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                           <img
                             src={msg.imageUrl}
                             alt="Tw Generated Artwork"
+                            referrerPolicy="no-referrer"
                             className="w-full h-auto object-cover max-h-96 rounded-2xl cursor-pointer transition-transform duration-200 group-hover/img:scale-[1.01]"
                             onClick={() => setSelectedImage(msg.imageUrl || null)}
                           />
@@ -516,7 +543,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                               </button>
                               <a
                                 href={msg.imageUrl}
-                                download={`tw-image-${msg.id}.png`}
+                                download={`tw-image-${msg.id}.jpg`}
                                 className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                                   isLight ? 'hover:bg-black/5 text-zinc-600 hover:text-black' : 'hover:bg-white/10 text-zinc-400 hover:text-white'
                                 }`}
@@ -568,6 +595,45 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         </div>
                       )}
 
+                      {/* Double Verification Badge (Always positive, emerald/cyan, zero red, zero X) */}
+                      {msg.verification && (
+                        <div className={`mt-3 p-3 rounded-2xl border text-xs ${
+                          isLight
+                            ? 'bg-emerald-50/70 border-emerald-200/80 text-emerald-950 shadow-sm'
+                            : 'bg-emerald-950/20 border-emerald-500/30 text-emerald-200'
+                        }`}>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-1.5 font-bold">
+                              <CheckCircle className="w-4 h-4 text-emerald-500" />
+                              <span>Validare Dublă Tw AI</span>
+                            </div>
+                            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
+                              Încredere: {msg.verification.overallConfidence}%
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                            <div className={`p-2 rounded-xl border ${
+                              isLight ? 'bg-white/90 border-emerald-200/60' : 'bg-[#131314]/60 border-emerald-500/20'
+                            }`}>
+                              <div className="flex items-center gap-1 font-semibold text-emerald-500 mb-0.5">
+                                <Check className="w-3 h-3 text-emerald-500" />
+                                <span>{msg.verification.check1.title}</span>
+                              </div>
+                              <p className="opacity-80 leading-relaxed">{msg.verification.check1.details}</p>
+                            </div>
+                            <div className={`p-2 rounded-xl border ${
+                              isLight ? 'bg-white/90 border-emerald-200/60' : 'bg-[#131314]/60 border-emerald-500/20'
+                            }`}>
+                              <div className="flex items-center gap-1 font-semibold text-emerald-500 mb-0.5">
+                                <Check className="w-3 h-3 text-emerald-500" />
+                                <span>{msg.verification.check2.title}</span>
+                              </div>
+                              <p className="opacity-80 leading-relaxed">{msg.verification.check2.details}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Gemini action toolbar under assistant message */}
                       {msg.content && (
                         <div className={`flex items-center gap-1 mt-3 pt-1 ${isLight ? 'text-zinc-500' : 'text-zinc-500'}`}>
@@ -601,6 +667,34 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                             <Volume2 className="w-4 h-4" />
                           </button>
 
+                          {/* Double Verification Action Button */}
+                          <button
+                            onClick={() => {
+                              const msgIndex = messages.findIndex((m) => m.id === msg.id);
+                              const prevMsg = msgIndex > 0 ? messages[msgIndex - 1] : null;
+                              const question = prevMsg?.role === 'user' ? prevMsg.content : 'Context general';
+                              onVerifyMessage(msg.id, question, msg.content);
+                            }}
+                            disabled={verifyingMessageId === msg.id}
+                            className={`p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-[11px] font-medium ${
+                              msg.verification
+                                ? 'text-emerald-500 bg-emerald-500/10'
+                                : isLight
+                                ? 'hover:text-black hover:bg-black/5 text-zinc-500'
+                                : 'hover:text-white hover:bg-white/5 text-zinc-400'
+                            }`}
+                            title="Verifică acuratețea și siguranța răspunsului"
+                          >
+                            {verifyingMessageId === msg.id ? (
+                              <TwSparkleIcon size={13} className="animate-spin text-[#4285F4]" />
+                            ) : (
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                            )}
+                            <span className="hidden sm:inline">
+                              {msg.verification ? 'Verificat 100%' : 'Verifică'}
+                            </span>
+                          </button>
+
                           {/* Like rating */}
                           <button
                             onClick={() => handleRate(msg.id, 'up')}
@@ -621,7 +715,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                             onClick={() => handleRate(msg.id, 'down')}
                             className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                               ratings[msg.id] === 'down'
-                                ? 'text-red-500'
+                                ? 'text-zinc-500 bg-zinc-500/10'
                                 : isLight
                                 ? 'hover:text-black hover:bg-black/5'
                                 : 'hover:text-white hover:bg-white/5'
@@ -677,7 +771,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   stopSpeaking();
                   setSpeakingMessageId(null);
                 }}
-                className="px-2.5 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                className={`px-2.5 py-1 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
+                  isLight ? 'bg-black/10 hover:bg-black/15 text-zinc-700' : 'bg-white/10 hover:bg-white/15 text-zinc-200'
+                }`}
               >
                 Oprește
               </button>
@@ -686,9 +782,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
           {/* Active Voice Dictation Banner */}
           {isDictating && (
-            <div className="mb-2 p-2 rounded-2xl bg-red-950/80 border border-red-500/40 flex items-center justify-between text-xs text-red-200 animate-pulse">
+            <div className={`mb-2 p-2.5 rounded-2xl border flex items-center justify-between text-xs animate-fadeIn ${
+              isLight
+                ? 'bg-purple-50 border-purple-200 text-purple-900'
+                : 'bg-purple-950/40 border-purple-500/40 text-purple-200'
+            }`}>
               <div className="flex items-center gap-2">
-                <Mic className="w-4 h-4 text-red-400 shrink-0" />
+                <Mic className="w-4 h-4 text-[#9B72CF] shrink-0 animate-bounce" />
                 <span className="font-semibold">
                   Dictare vocală pornită: Vorbește acum în microfon...
                 </span>
@@ -696,7 +796,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <button
                 type="button"
                 onClick={handleToggleDictation}
-                className="px-2.5 py-1 bg-red-800 hover:bg-red-700 text-white rounded-xl text-xs font-bold cursor-pointer"
+                className="px-3 py-1 bg-gradient-to-r from-[#4285F4] to-[#9B72CF] hover:opacity-90 text-white rounded-xl text-xs font-bold cursor-pointer shadow-sm"
               >
                 Gata
               </button>
@@ -707,7 +807,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <div className="flex items-center gap-1.5 mb-2 overflow-x-auto no-scrollbar py-0.5">
             <button
               type="button"
-              onClick={() => setShowImagePromptModal(true)}
+              onClick={handleOpenImageModal}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] shrink-0 transition-colors cursor-pointer active:scale-98 ${
                 isLight
                   ? 'bg-[#f0f4f9] hover:bg-[#e9eef6] border-black/5 text-zinc-700'
@@ -751,7 +851,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               isLight
                 ? 'bg-[#f0f4f9] border-black/10 focus-within:border-[#4285F4]/70 focus-within:ring-2 focus-within:ring-[#4285F4]/20 shadow-lg'
                 : 'bg-[#1e1f20] border-white/10 focus-within:border-[#9B72CF]/70 focus-within:ring-2 focus-within:ring-[#4285F4]/20 shadow-2xl'
-            } ${isQuotaExhausted ? 'border-red-500/40 opacity-70' : ''}`}
+            } ${isQuotaExhausted ? (isLight ? 'border-zinc-300 opacity-80' : 'border-zinc-700 opacity-80') : ''}`}
           >
             <textarea
               ref={textareaRef}
@@ -781,7 +881,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               {/* Image generator button */}
               <button
                 type="button"
-                onClick={() => setShowImagePromptModal(true)}
+                onClick={handleOpenImageModal}
                 disabled={isQuotaExhausted || isLoading}
                 className={`p-2 rounded-full transition-all cursor-pointer disabled:opacity-40 ${
                   isLight ? 'text-zinc-500 hover:text-[#9B72CF] hover:bg-black/5' : 'text-zinc-400 hover:text-[#9B72CF] hover:bg-white/5'
@@ -799,7 +899,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   disabled={isQuotaExhausted}
                   className={`p-2 rounded-full transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
                     isDictating
-                      ? 'bg-red-500 text-white animate-pulse'
+                      ? 'bg-gradient-to-r from-[#4285F4] to-[#9B72CF] text-white animate-pulse shadow-md'
                       : isLight
                       ? 'text-zinc-500 hover:text-black hover:bg-black/5'
                       : 'text-zinc-400 hover:text-white hover:bg-white/5'
@@ -893,6 +993,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <img
                 src={selectedImage}
                 alt="Zoomed Visual"
+                referrerPolicy="no-referrer"
                 className="max-h-[75vh] w-auto object-contain rounded-2xl"
               />
             </div>
@@ -946,6 +1047,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 rows={3}
                 value={imagePromptInput}
                 onChange={(e) => setImagePromptInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    const prompt = imagePromptInput.trim();
+                    if (prompt && !isLoading) {
+                      setShowImagePromptModal(false);
+                      setImagePromptInput('');
+                      onGenerateImage(prompt);
+                    }
+                  }
+                }}
                 placeholder="Exemplu: Un astronaut explorând o junglă bioluminescentă pe o planetă extraterestră..."
                 className={`w-full border rounded-2xl p-3 text-xs focus:outline-none resize-none leading-relaxed ${
                   isLight

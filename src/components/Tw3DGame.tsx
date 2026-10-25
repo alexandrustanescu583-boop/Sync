@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Volume2, VolumeX, ArrowLeft, RotateCcw, Play, Trophy, Shield } from 'lucide-react';
+import { Volume2, Volume, ArrowLeft, RotateCcw, Play, Trophy, Shield } from 'lucide-react';
 import { TwLogo } from './TwLogo';
 
 interface Tw3DGameProps {
@@ -451,7 +451,7 @@ export const Tw3DGame: React.FC<Tw3DGameProps> = ({ onBackToChat, userName = 'Pi
             className="p-2 rounded-2xl bg-[#1e1f20]/90 hover:bg-[#282a2c] text-zinc-300 border border-white/10 backdrop-blur-md cursor-pointer transition-all"
             title={isMuted ? 'Activează sunetul' : 'Dezactivează sunetul'}
           >
-            {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-[#4285F4]" />}
+            {isMuted ? <Volume className="w-4 h-4 text-zinc-400" /> : <Volume2 className="w-4 h-4 text-[#4285F4]" />}
           </button>
         </div>
       </div>
@@ -491,12 +491,12 @@ export const Tw3DGame: React.FC<Tw3DGameProps> = ({ onBackToChat, userName = 'Pi
       {/* Game Over Screen */}
       {gameState === 'gameover' && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center p-6 bg-black/70 backdrop-blur-md animate-fadeIn">
-          <div className="max-w-sm w-full bg-[#1e1f20] border border-red-500/30 rounded-3xl p-6 text-center shadow-2xl">
-            <div className="w-12 h-12 rounded-2xl bg-red-500/20 text-red-400 border border-red-500/40 flex items-center justify-center mx-auto mb-3">
+          <div className="max-w-sm w-full bg-[#1e1f20] border border-[#9B72CF]/30 rounded-3xl p-6 text-center shadow-2xl">
+            <div className="w-12 h-12 rounded-2xl bg-purple-500/20 text-[#9B72CF] border border-purple-500/40 flex items-center justify-center mx-auto mb-3">
               <Shield className="w-6 h-6" />
             </div>
 
-            <h2 className="text-2xl font-black text-white mb-1">Impact Detectat!</h2>
+            <h2 className="text-2xl font-black text-white mb-1">Misiune Încheiată</h2>
             <p className="text-xs text-zinc-400 mb-4">
               Scor final atins de pilotul {userName}:
             </p>

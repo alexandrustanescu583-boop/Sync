@@ -252,7 +252,7 @@ export const AdminConsoleModal: React.FC<AdminConsoleModalProps> = ({
                               {isSuperuser ? (
                                 <button
                                   onClick={() => onUpdateUserRole(u.id, 'student')}
-                                  className="px-2.5 py-1 rounded-lg bg-red-950/50 hover:bg-red-900/60 border border-red-500/40 text-red-300 text-[11px] font-bold transition-colors cursor-pointer"
+                                  className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 text-[11px] font-bold transition-colors cursor-pointer"
                                   title="Revocă drepturile de administrator"
                                 >
                                   Revocă Admin
@@ -466,7 +466,7 @@ export const AdminConsoleModal: React.FC<AdminConsoleModalProps> = ({
                       </span>
                       <button
                         onClick={() => onDeleteMemory(mem.id)}
-                        className="text-zinc-500 hover:text-red-400 p-1 rounded-md transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                        className="text-zinc-500 hover:text-zinc-200 p-1 rounded-md transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
                         title="Șterge amintirea"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
